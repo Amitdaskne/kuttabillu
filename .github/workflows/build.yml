@@ -1,0 +1,44 @@
+name: Build Kuttabillu APK
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        gradle-version: 8.5
+
+    - name: Accept Android SDK Licenses
+      run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
+    - name: Build APK
+      run: |
+        # Project root dhoondho (jahan settings.gradle ho)
+        SETTINGS_FILE=$(find . -name "settings.gradle" | head -1)
+        PROJECT_DIR=$(dirname "$SETTINGS_FILE")
+        cd "$PROJECT_DIR"
+        
+        # Direct Gradle command use karo (gradlew ki zaroorat nahi)
+        gradle assembleDebug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: kuttabillu-apk
+        path: "**/build/outputs/apk/debug/*.apk"
